@@ -1,6 +1,6 @@
-# python script to retrieve International Space Station (ISS) or Fermi satellite (GLAST) coordinates at any time
+# python script to retrieve International Space Station (ISS) or Fermi satellite (GLAST) or AGILE satellites coordinates at any time
 
-- `satellite_coordinates.py` : Python script containing a class to get ISS or Fermi coordinates (longitude in degrees, latitude in degrees, altitude in kilometers) at a given time.
+- `satellite_coordinates.py` : Python script containing a class to get ISS or Fermi OR AGILE coordinates (longitude in degrees, latitude in degrees, altitude in kilometers) at a given time.
 The method (function) of the class called `get_satellite_coordinates` takes input time that uses the Python `datetime` object.
 
 - See `test.py` for usage example
@@ -9,4 +9,5 @@ The method (function) of the class called `get_satellite_coordinates` takes inpu
 
 - Other satellites can easily be added. TLE data can be downloaded at www.space-track.org (registration required).
 
-- Python lirbary requirements are indicated `requirements.txt` . Run `pip install -r requirements.txt` to install them.
+- Python library requirements are indicated `requirements.txt`. Run `pip install -r requirements.txt` to install them.
+- *Requires python >=3.6*
