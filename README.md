@@ -1,13 +1,15 @@
-# python script to retrieve International Space Station (ISS) or Fermi satellite (GLAST) or AGILE satellites coordinates at any time
+## python script to retrieve geodetic coordinates of three satellites (International Space Station (ISS), Fermi (GLAST) and AGILE) at any time
 
-- `satellite_coordinates.py` : Python script containing a class to get ISS or Fermi OR AGILE coordinates (longitude in degrees, latitude in degrees, altitude in kilometers) at a given time.
-The method (function) of the class called `get_satellite_coordinates` takes input time that uses the Python `datetime` object.
+* **Requires python >=3.6**
+* `satellite_coordinates.py` : Python script containing a class to get ISS or Fermi or AGILE coordinates (longitude in degrees, latitude in degrees, altitude in kilometers) at a given time.
+The method (function) of the class called `get_satellite_coordinates` takes as input a time (that uses the Python `datetime` object), and outputs longitude (deg), latitude (deg), altitude (km) of the requested satellite.
+* See `test.py` for usage example
+* Python library requirements are indicated in the file `requirements.txt`. Run `pip install -r requirements.txt` to install them.
 
-- See `test.py` for usage example
+* The datafiles containing the list of Two Line Elements (TLE) of each satellites are contained in the folder `/dataFiles`. Now data is up to 28/03/2019.
+* Other satellites can easily be added. TLE data can be downloaded at www.space-track.org (registration required).
 
-- the datafiles with the Two Line Elements (TLE) data of ISS and Fermi are contained in the folder `/dataFiles`. Now up to 19/02/2019.
 
-- Other satellites can easily be added. TLE data can be downloaded at www.space-track.org (registration required).
+## A MATLAB script to do the same is also available
+* See the `/MATLAB` folder. The script `test.m` shows example usage.
 
-- Python library requirements are indicated `requirements.txt`. Run `pip install -r requirements.txt` to install them.
-- *Requires python >=3.6*
