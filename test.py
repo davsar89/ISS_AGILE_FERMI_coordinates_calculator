@@ -11,19 +11,19 @@ if __name__ == "__main__":
 
     print('\n')
 
-    lon, lat, alt = fermi_coordinates.get_satellite_coordinates(input_datetime)
+    lon, lat, alt, v_vec = fermi_coordinates.get_satellite_coordinates(input_datetime)
     print('Satellite name : ', fermi_coordinates.name)
     print('Requested time : ', input_datetime)
     print('Longitude (deg), Latitude (deg), Altitude (km) : ', round(lon,3), round(lat,3), round(alt,3))
     print('\n')
 
-    lon, lat, alt = agile_coordinates.get_satellite_coordinates(input_datetime)
+    lon, lat, alt, v_vec = agile_coordinates.get_satellite_coordinates(input_datetime)
     print('Satellite name : ', agile_coordinates.name)
     print('Requested time : ', input_datetime)
     print('Longitude (deg), Latitude (deg), Altitude (km) : ', round(lon,3), round(lat,3), round(alt,3))
     print('\n')
 
-    lon, lat, alt = iss_coordinates.get_satellite_coordinates(input_datetime)
+    lon, lat, alt, v_vec = iss_coordinates.get_satellite_coordinates(input_datetime)
     print('Satellite name : ', iss_coordinates.name)
     print('Requested time : ', input_datetime)
     print('Longitude (deg), Latitude (deg), Altitude (km) : ', round(lon,3), round(lat,3), round(alt,3))

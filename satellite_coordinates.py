@@ -149,10 +149,12 @@ class satellite_coordinates:
         position, velocity, error = satellite.ITRF_position_velocity_error(tttt)
         au_to_Km = 149597870.700
 
+        v_vec_itrf = velocity / (velocity[0]**2 + velocity[1]**2 + velocity[2]**2)
+
         position = np.asarray(position) * au_to_Km * 1000.0    # to meters
 
         lon, lat, alt = pyproj.transform(self.ecef, self.lla, position[0], position[1],
                                          position[2], radians=False)
         alt = alt / 1000.0
 
-        return lon, lat, alt
+        return lon, lat, alt, v_vec_itrf
