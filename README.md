@@ -1,4 +1,4 @@
-## Python script to retrieve GPS coordinates of three satellites (International Space Station (ISS), Fermi (GLAST) and AGILE) at any time
+## Python script to retrieve GPS coordinates and ECEF velocity vectors of three satellites (International Space Station (ISS), Fermi (GLAST) and AGILE) at any time
 
 * **Requires python >=3.6**
 * `satellite_coordinates.py` : Python script containing a class to get ISS or Fermi or AGILE coordinates (longitude in degrees, latitude in degrees, altitude in kilometers) at a given time.
