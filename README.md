@@ -8,8 +8,3 @@ The method (function) of the class called `get_satellite_coordinates` takes as i
 
 * The datafiles containing the list of Two Line Elements (TLE) of each satellites are contained in the folder `/dataFiles`. Now data is up to 14/10/2020.
 * Other satellites can easily be added and TLE can be updated to later times. TLE data can be downloaded at www.space-track.org (registration required).
-
-
-## A MATLAB script to do the same is also available
-* See the `/MATLAB` folder. The script `test.m` shows example usage.
-
