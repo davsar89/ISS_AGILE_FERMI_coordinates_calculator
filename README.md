@@ -6,5 +6,5 @@ The method (function) of the class called `get_satellite_coordinates` takes as i
 * See `test.py` for usage example
 * Python library requirements are indicated in the file `requirements.txt`. Run `pip install -r requirements.txt` to install them.
 
-* The datafiles containing the list of Two Line Elements (TLE) of each satellites are contained in the folder `/dataFiles`. Now data is up to 14/10/2020.
+* The datafiles containing the list of Two Line Elements (TLE) of each satellites are contained in the folder `/dataFiles`. Now data is up to 18/11/2020.
 * Other satellites can easily be added and TLE can be updated to later times. TLE data can be downloaded at www.space-track.org (registration required).
