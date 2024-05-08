@@ -52,6 +52,29 @@ class satellite_coordinates:
         self.day_to_seconds = 86400.0
 
     ##
+    def gps_to_ecef_pyproj(self, lat, lon, alt):
+        """
+        Inputs:
+          - lon, lat in degrees
+          - alt in meters
+        Outputs:
+          - x,y,z in meters
+        """
+        x, y, z = pyproj.transform(self.lla, self.ecef, lon, lat, alt, radians=False)
+        return x, y, z
+    
+    def ecef_to_gps_pyproj(self, x, y, z):
+        """
+        Inputs:
+          - x,y,z in meters
+        Outputs:
+          - lon, lat in degrees
+          - alt in meters
+        """
+        lon, lat, alt = pyproj.transform(self.ecef, self.lla, x, y, z, radians=False)
+        return lon, lat, alt 
+
+    ##
 
     def nearestDate(self, base):
         base_timestamp = calendar.timegm(base.utctimetuple())
@@ -134,7 +157,6 @@ class satellite_coordinates:
         # print(tttt)
 
         position, velocity, error = satellite.ITRF_position_velocity_error(tttt)
-        
 
         norm_velocity = math.sqrt(velocity[0]**2 + velocity[1]**2 + velocity[2]**2)
 
@@ -144,8 +166,7 @@ class satellite_coordinates:
 
         position = np.asarray(position) * self.au_to_Km * 1000.0    # to meters
 
-        lon, lat, alt = pyproj.transform(self.ecef, self.lla, position[0], position[1],
-                                         position[2], radians=False)
+        lon, lat, alt = self.ecef_to_gps_pyproj(position[0], position[1], position[2])
         alt = alt / 1000.0 # to kilometers
 
         return lon, lat, alt, v_vec_itrf, norm_velocity_km_s
