@@ -21,7 +21,7 @@ if __name__ == "__main__":
     
     lon, lat, alt, v_vec, v_km_s = sat_coordinates.get_satellite_coordinates(input_datetime)
 
-    X,Y,Z = self.gps_to_ecef_pyproj(lat, lon, alt)
+    X,Y,Z = sat_coordinates.gps_to_ecef_pyproj(lat, lon, alt)
 
     # Z: normalized inverted position vector
     LVLH_baseZ = np.array([-1.0*X,-1.0*Y,-1.0*Z])
