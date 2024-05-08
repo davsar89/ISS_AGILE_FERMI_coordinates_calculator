@@ -9,7 +9,7 @@ The method (function) of the class called `get_satellite_coordinates` takes as i
 * The datafiles containing the list of Two Line Elements (TLE) of each satellites are contained in the folder `/dataFiles`. Now data is up to 08/05/2024.
 * Other satellites can easily be added and TLE can be updated to later times. TLE data can be downloaded at www.space-track.org (registration required).
 
-* Examle output results:
+* Example output results:
 ```
 ## $ python get_Fermi_velocity_and_position_and_LVLH_frame.py 
 
