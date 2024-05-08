@@ -52,7 +52,7 @@ class satellite_coordinates:
         self.day_to_seconds = 86400.0
 
     ##
-    def gps_to_ecef_pyproj(self, lat, lon, alt):
+    def gps_to_ecef(self, lat, lon, alt):
         """
         Inputs:
           - lon, lat in degrees
@@ -63,7 +63,7 @@ class satellite_coordinates:
         x, y, z = pyproj.transform(self.lla, self.ecef, lon, lat, alt, radians=False)
         return x, y, z
     
-    def ecef_to_gps_pyproj(self, x, y, z):
+    def ecef_to_gps(self, x, y, z):
         """
         Inputs:
           - x,y,z in meters
@@ -140,21 +140,13 @@ class satellite_coordinates:
         line1 = self.TLE_line_1[closest_idx]
         line2 = self.TLE_line_2[closest_idx]
 
-        # print(closest_idx)
-        # print(line1)
-        # print(line2)
-
         satellite = sgp4lib.EarthSatellite(line1, line2)
-
-        # print(satellite)
 
         tttt = self.ts.utc(input_datetime.year, input_datetime.month, input_datetime.day, input_datetime.hour,
                       input_datetime.minute, input_datetime.second + input_datetime.microsecond/1.0e6)
 
         # tttt = ts.utc(input_datetime.year, input_datetime.month, input_datetime.day, input_datetime.hour,
                       # input_datetime.minute, input_datetime.second)
-
-        # print(tttt)
 
         position, velocity, error = satellite.ITRF_position_velocity_error(tttt)
 
@@ -166,7 +158,7 @@ class satellite_coordinates:
 
         position = np.asarray(position) * self.au_to_Km * 1000.0    # to meters
 
-        lon, lat, alt = self.ecef_to_gps_pyproj(position[0], position[1], position[2])
+        lon, lat, alt = self.ecef_to_gps(position[0], position[1], position[2])
         alt = alt / 1000.0 # to kilometers
 
         return lon, lat, alt, v_vec_itrf, norm_velocity_km_s

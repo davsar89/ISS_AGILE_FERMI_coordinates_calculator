@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     lon, lat, alt, v_vec, v_km_s = iss_coordinates.get_satellite_coordinates(input_datetime)
 
-    X,Y,Z = iss_coordinates.gps_to_ecef_pyproj(lat, lon, alt)
+    X,Y,Z = iss_coordinates.gps_to_ecef(lat, lon, alt)
 
     LVLH_baseZ=np.array([-1.0*X,-1.0*Y,-1.0*Z])
     LVLH_baseZ = LVLH_baseZ/np.linalg.norm(LVLH_baseZ)
