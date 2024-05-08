@@ -29,10 +29,7 @@ if __name__ == "__main__":
     LVLH_baseZ=np.array([-1.0*X,-1.0*Y,-1.0*Z])
     LVLH_baseZ = LVLH_baseZ/np.linalg.norm(LVLH_baseZ)
 
-    v_vec_val = v_vec[0]**2 + v_vec[1]**2 + v_vec[2]**2
-    v_vec[0] = v_vec[0]/ v_vec_val
-    v_vec[1] = v_vec[1]/ v_vec_val
-    v_vec[2] = v_vec[2]/ v_vec_val
+    v_vec = v_vec/np.linalg.norm(v_vec)
 
 # Y: Z cross velocity
     LVLH_baseY = np.cross(LVLH_baseZ, v_vec)
