@@ -11,21 +11,23 @@ if __name__ == "__main__":
 
     print('\n')
 
-    lon, lat, alt, v_vec, _ = fermi_coordinates.get_satellite_coordinates(input_datetime)
+    lon, lat, alt, v_vec, v_km_s = fermi_coordinates.get_satellite_coordinates(input_datetime)
     print(f'Satellite name: {fermi_coordinates.name}')
     print(f'Requested time: {input_datetime}')
+    print(f'Velocity (km/s): {v_km_s}')
     print(f'Longitude (deg), Latitude (deg), Altitude (km): {round(lon,3)}, {round(lat,3)}, {round(alt,3)}')
     print('\n')
 
-    lon, lat, alt, v_vec, _ = agile_coordinates.get_satellite_coordinates(input_datetime)
+    lon, lat, alt, v_vec, v_km_s = agile_coordinates.get_satellite_coordinates(input_datetime)
     print(f'Satellite name: {agile_coordinates.name}')
     print(f'Requested time: {input_datetime}')
+    print(f'Velocity (km/s): {v_km_s}')
     print(f'Longitude (deg), Latitude (deg), Altitude (km): {round(lon,3)}, {round(lat,3)}, {round(alt,3)}')
     print('\n')
 
-    lon, lat, alt, v_vec, _ = iss_coordinates.get_satellite_coordinates(input_datetime)
+    lon, lat, alt, v_vec, v_km_s = iss_coordinates.get_satellite_coordinates(input_datetime)
     print(f'Satellite name: {iss_coordinates.name}')
     print(f'Requested time: {input_datetime}')
+    print(f'Velocity (km/s): {v_km_s}')
     print(f'Longitude (deg), Latitude (deg), Altitude (km): {round(lon,3)}, {round(lat,3)}, {round(alt,3)}')
     print('\n')
-    
