@@ -119,7 +119,7 @@ class satellite_coordinates:
         """
     Returns the longitude (deg), latitude (deg), altitude (km) of a satellite at a given time
         :param input_datetime: python datetime structure identifying the time where the coordinates of the satellite is wanted
-        :return: longitude (deg), latitude (deg), altitude (km)
+        :return: longitude (deg), latitude (deg), altitude (km), velocity vector (normalized)
         """
 
         # input_datetime = datetime.datetime(year=2018, month=9, day=16, hour=13,minute=15,second=40)
