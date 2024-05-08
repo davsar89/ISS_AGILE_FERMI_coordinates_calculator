@@ -11,13 +11,6 @@ import numpy as np
 # 2019-Mar-24 00:31:53.135444
 # should be close to 0.157454678525265    55.3015430661528
 
-def gps_to_ecef_pyproj(lat, lon, alt):
-    ecef = pyproj.Proj(proj='geocent', ellps='WGS84', datum='WGS84')
-    lla = pyproj.Proj(proj='latlong', ellps='WGS84', datum='WGS84')
-    x, y, z = pyproj.transform(lla, ecef, lon, lat, alt, radians=False)
-
-    return x, y, z
-
 if __name__ == "__main__":
 
     #sat_coordinates = satellite_coordinates(name='ISS')
@@ -28,7 +21,7 @@ if __name__ == "__main__":
     
     lon, lat, alt, v_vec, v_km_s = sat_coordinates.get_satellite_coordinates(input_datetime)
 
-    X,Y,Z = gps_to_ecef_pyproj(lat, lon, alt)
+    X,Y,Z = self.gps_to_ecef_pyproj(lat, lon, alt)
 
     # Z: normalized inverted position vector
     LVLH_baseZ = np.array([-1.0*X,-1.0*Y,-1.0*Z])

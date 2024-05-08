@@ -5,14 +5,6 @@ import pyproj
 import math
 import numpy as np
 
-
-def gps_to_ecef_pyproj(lat, lon, alt):
-    ecef = pyproj.Proj(proj='geocent', ellps='WGS84', datum='WGS84')
-    lla = pyproj.Proj(proj='latlong', ellps='WGS84', datum='WGS84')
-    x, y, z = pyproj.transform(lla, ecef, lon, lat, alt, radians=False)
-
-    return x, y, z
-
 if __name__ == "__main__":
 
     iss_coordinates = satellite_coordinates(name='ISS')
@@ -24,7 +16,7 @@ if __name__ == "__main__":
 
     lon, lat, alt, v_vec, v_km_s = iss_coordinates.get_satellite_coordinates(input_datetime)
 
-    X,Y,Z = gps_to_ecef_pyproj(lat, lon, alt)
+    X,Y,Z = iss_coordinates.gps_to_ecef_pyproj(lat, lon, alt)
 
     LVLH_baseZ=np.array([-1.0*X,-1.0*Y,-1.0*Z])
     LVLH_baseZ = LVLH_baseZ/np.linalg.norm(LVLH_baseZ)
