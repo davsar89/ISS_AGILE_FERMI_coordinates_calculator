@@ -48,6 +48,9 @@ class satellite_coordinates:
         self.ecef = pyproj.Proj(proj='geocent', ellps='WGS84')
         self.lla = pyproj.Proj(proj='latlong', ellps='WGS84')
 
+        self.au_to_Km = 149597870.700
+        self.day_to_seconds = 86400.0
+
     ##
 
     def nearestDate(self, base):
@@ -98,9 +101,9 @@ class satellite_coordinates:
 
     def get_satellite_coordinates(self, input_datetime):
         """
-    Calculates the longitude (deg), latitude (deg), altitude (km) and velocity vector (normalized) of a satellite at a given time
+    Calculates the longitude (deg), latitude (deg), altitude (km) and velocity vector (normalized + magntitude in km/s) of a satellite at a given time
         :param input_datetime: python datetime structure identifying the time where the coordinates of the satellite is wanted
-        :return: longitude (deg), latitude (deg), altitude (km), velocity vector (normalized)
+        :return: longitude (deg), latitude (deg), altitude (km), velocity vector (normalized), magnitude of the velocity vector (in km/s)
         """
 
         # input_datetime = datetime.datetime(year=2018, month=9, day=16, hour=13,minute=15,second=40)
@@ -109,7 +112,7 @@ class satellite_coordinates:
 
         closest_idx, delta_t = self.nearestDate(input_datetime)
 
-        print(f"Closest TLE has a delta time of: {delta_t}")
+        print(f"Closest TLE has a delta time of: {delta_t} seconds")
 
         line1 = self.TLE_line_1[closest_idx]
         line2 = self.TLE_line_2[closest_idx]
@@ -131,14 +134,18 @@ class satellite_coordinates:
         # print(tttt)
 
         position, velocity, error = satellite.ITRF_position_velocity_error(tttt)
-        au_to_Km = 149597870.700
+        
 
-        v_vec_itrf = velocity / math.sqrt(velocity[0]**2 + velocity[1]**2 + velocity[2]**2) # unit vector
+        norm_velocity = math.sqrt(velocity[0]**2 + velocity[1]**2 + velocity[2]**2)
 
-        position = np.asarray(position) * au_to_Km * 1000.0    # to meters
+        norm_velocity_km_s = norm_velocity*self.au_to_Km/self.day_to_seconds
+
+        v_vec_itrf = velocity / norm_velocity # unit vector
+
+        position = np.asarray(position) * self.au_to_Km * 1000.0    # to meters
 
         lon, lat, alt = pyproj.transform(self.ecef, self.lla, position[0], position[1],
                                          position[2], radians=False)
-        alt = alt / 1000.0
+        alt = alt / 1000.0 # to kilometers
 
-        return lon, lat, alt, v_vec_itrf
+        return lon, lat, alt, v_vec_itrf, norm_velocity_km_s
