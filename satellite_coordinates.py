@@ -117,7 +117,7 @@ class satellite_coordinates:
 
     def get_satellite_coordinates(self, input_datetime):
         """
-    Returns the longitude (deg), latitude (deg), altitude (km) of a satellite at a given time
+    Calculates the longitude (deg), latitude (deg), altitude (km) and velocity vector (normalized) of a satellite at a given time
         :param input_datetime: python datetime structure identifying the time where the coordinates of the satellite is wanted
         :return: longitude (deg), latitude (deg), altitude (km), velocity vector (normalized)
         """
