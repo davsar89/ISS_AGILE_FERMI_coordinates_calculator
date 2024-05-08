@@ -150,7 +150,7 @@ class satellite_coordinates:
         position, velocity, error = satellite.ITRF_position_velocity_error(tttt)
         au_to_Km = 149597870.700
 
-        v_vec_itrf = velocity / math.sqrt(velocity[0]**2 + velocity[1]**2 + velocity[2]**2)
+        v_vec_itrf = velocity / math.sqrt(velocity[0]**2 + velocity[1]**2 + velocity[2]**2) # unit vector
 
         position = np.asarray(position) * au_to_Km * 1000.0    # to meters
 
