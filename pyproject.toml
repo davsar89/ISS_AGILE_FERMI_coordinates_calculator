@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iss-agile-fermi-coordinates"
+version = "0.1.0"
+description = "SGP4 satellite coordinates and orbital LVLH from local TLE archives"
+readme = "README.md"
+requires-python = ">=3.10"
+dynamic = ["dependencies"]
+
+[project.scripts]
+satellite-coordinates = "iss_coords.__main__:main"
+update-tle-data = "iss_coords.download:main"
+
+[tool.setuptools]
+packages = ["iss_coords"]
+py-modules = ["satellite_coordinates", "tle_data", "update_TLE_data"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.package-data]
+iss_coords = ["dataFiles/*.txt"]

@@ -1,4 +1,4 @@
-"""Run offline with: python -m unittest -v test_checks"""
+"""Run offline with: python -m unittest discover -s tests -v"""
 from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
@@ -105,7 +105,7 @@ class DownloadChecks(unittest.TestCase):
         with self.assertRaises(ValueError):
             update(client, self.root)
         self.assertEqual(filename.read_bytes(), original)
-        with patch('update_TLE_data.os.replace', side_effect=OSError('disk failure')):
+        with patch('iss_coords.download.os.replace', side_effect=OSError('disk failure')):
             with self.assertRaises(OSError):
                 atomic_write(filename, 'replacement')
         self.assertEqual(filename.read_bytes(), original)

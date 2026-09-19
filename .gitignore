@@ -6,4 +6,7 @@ __pycache__/
 .env.*
 !.env.example
 .venv/
-dataFiles/last_update*.json
+**/last_update_TLE.json
+build/
+dist/
+*.egg-info/

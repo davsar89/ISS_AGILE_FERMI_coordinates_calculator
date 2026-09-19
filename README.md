@@ -1,23 +1,50 @@
 # ISS, Fermi and AGILE coordinates
 
-Calculate WGS84 longitude/latitude (degrees), altitude (km), and Earth-fixed ECEF velocity (unit vector and km/s) from TLEs using Skyfield/SGP4. Recommended: Python 3.10+.
+WGS84 longitude/latitude, ellipsoidal altitude, Earth-fixed ECEF velocity, and orbital LVLH from local TLEs using Skyfield/SGP4. Requires Python 3.10+.
 
-## Setup and TLE updates
+## Install and use
 
 ```sh
-python -m pip install -r requirements.txt
+python -m pip install .
 ```
 
-Copy `.env.example` to `.env` and fill in `SPACETRACK_USERNAME` and `SPACETRACK_PASSWORD` with your [Space-Track](https://www.space-track.org) credentials. `.env` is ignored by Git; environment variables override it.
+```python
+from datetime import datetime, timezone
+from iss_coords import SatelliteCoordinates
+
+sat = SatelliteCoordinates("ISS")  # also "Fermi" or "AGILE"; load once, reuse
+state = sat.at(datetime(2026, 9, 19, 4, 12, tzinfo=timezone.utc))
+print(state.longitude_deg, state.latitude_deg, state.altitude_km)
+print(state.position_ecef_km, state.velocity_ecef_km_s, state.lvlh_ecef)
+print(state.tle_epoch_utc, state.tle_age_seconds)
+payload = state.to_dict()  # JSON-compatible values
+```
+
+Use `SatelliteCoordinates("ISS", data_dir="path/to/archives")` for external TLEs. `sat.coverage` gives the first and last epochs, not a guarantee of continuous coverage. Naive datetimes mean UTC. LVLH rows are X along-track, Y opposite inertial angular momentum, Z toward Earth's centre, expressed in ECEF axes; they are not measured spacecraft attitude.
+
+Other software can call the CLI; `--json` writes one JSON object to stdout, with errors on stderr and a nonzero exit status:
 
 ```sh
-python update_TLE_data.py            # latest elements
+satellite-coordinates ISS 2026-09-19T04:12:00Z --json
+# Equivalent: python -m iss_coords ISS 2026-09-19T04:12:00Z --json
+```
+
+The original `satellite_coordinates` import and its coordinate/LVLH methods still work. Coordinate conversion helpers use **metres**; state positions and altitude use **kilometres**, velocity **km/s**, and TLE age absolute **seconds**.
+
+## Update TLEs
+
+Copy `.env.example` to `.env` and set `SPACETRACK_USERNAME` and `SPACETRACK_PASSWORD`. `.env` is ignored by Git; environment variables override it. Calculations work offline without credentials.
+
+```sh
+python update_TLE_data.py            # source checkout: update bundled archives
 python update_TLE_data.py --history  # also fill history since the saved checkpoint
+# Installed use: choose a writable directory and point the reader there too.
+update-tle-data --data-dir ./archives --env-file .env --history
 ```
 
-Updates preserve historical records, validate TLE checksums, replace files atomically, and cache successful checks for one hour. Keep the ignored `dataFiles/last_update_TLE.json` to retain history checkpoints. Existing gaps before a checkpoint are not automatically filled.
+Updates preserve historical records, validate checksums, and replace each file atomically. Successful checks are cached for one hour. Keep `last_update_TLE.json` beside your archives to retain checkpoints; existing gaps before a checkpoint are not automatically filled.
 
-Included data, downloaded **19 September 2026**:
+Bundled archives (`iss_coords/dataFiles/`), checked **19 September 2026**:
 
 | Satellite | NORAD ID | Latest TLE epoch (UTC) |
 | --- | --- | --- |
@@ -25,31 +52,15 @@ Included data, downloaded **19 September 2026**:
 | Fermi/GLAST | 33053 | 2026-09-19 02:40:19.289568 |
 | AGILE | 31135 | 2024-02-08 00:00:00 (final archive) |
 
-AGILE is no longer in orbit; its data is for historical calculations only.
+A historical reconciliation with Space-Track returned no additional records. Largest remaining gaps: ISS **6.77 days**, Fermi **4.62 days**, AGILE **58.67 days** (8 September–6 November 2007). AGILE is no longer in orbit; its data is historical only.
 
-## Usage
+TLE accuracy degrades away from its epoch: calls warn beyond 3 days and fail beyond 14 days. These are safeguards, not accuracy guarantees. Nearest-TLE changes can introduce discontinuities. Precision work needs mission ephemerides and Earth-orientation data; measured polar motion is not configured here.
 
-```python
-from datetime import datetime, timezone
-from satellite_coordinates import satellite_coordinates
-
-sat = satellite_coordinates('ISS')  # also 'Fermi' or 'AGILE'
-when = datetime(2026, 9, 19, 4, 12, tzinfo=timezone.utc)
-lon, lat, altitude_km, velocity_direction, speed_km_s = sat.get_satellite_coordinates(when)
-x, y, z = sat.get_lvlh_frame(when)
-```
-
-Naive datetimes mean UTC. `gps_to_ecef` and `ecef_to_gps` use **metres**, while `get_satellite_coordinates` returns altitude in **kilometres**. LVLH axes are expressed in ECEF: X along-track, Y opposite inertial angular momentum, Z toward Earth's centre. They describe the orbital frame, not measured spacecraft attitude.
-
-TLE accuracy degrades away from its epoch: the code warns beyond 3 days and rejects beyond 14 days. These limits are not accuracy guarantees. Switching between nearest TLEs can introduce discontinuities. Precision work requires mission ephemerides and Earth-orientation data; measured polar motion is not configured here.
-
-## Checks and examples
+## Checks and layout
 
 ```sh
-python -m unittest -v test_checks
-python test.py
-python get_ISS_velocity_and_position_and_LVLH_frame.py
-python get_Fermi_velocity_and_position_and_LVLH_frame.py
+python -m unittest discover -s tests -v
+python examples/coordinates.py
 ```
 
-Checks cover parsing, download integrity, UTC handling, coordinate/velocity consistency, and LVLH geometry on real archived TLEs; they do not establish accuracy against independent tracking data.
+`iss_coords/` contains propagation, TLE parsing, downloading, and the CLI; `examples/` contains one reusable example; `tests/` checks physics consistency, data integrity, and the public API. Root Python files retain compatibility with earlier usage. Checks do not establish accuracy against independent tracking measurements.
