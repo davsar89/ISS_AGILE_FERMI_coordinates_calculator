@@ -1,3 +1,9 @@
 .idea/
 *~
 __pycache__/
+
+.env
+.env.*
+!.env.example
+.venv/
+dataFiles/last_update*.json

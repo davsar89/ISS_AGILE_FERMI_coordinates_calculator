@@ -1,55 +1,32 @@
-import sys
-
-###### check python version, required >= 3.6
-if sys.version_info[0] != 3 or sys.version_info[1] < 6:
-    print("This script requires Python version >= 3.6")
-    sys.exit(1)
-######
-import calendar
-import re
 import datetime
-import numpy as np
-import skyfield.sgp4lib as sgp4lib
+import warnings
 from pathlib import Path
-from skyfield import api
-import pyproj
-import math
 
-######
+import numpy as np
+import pyproj
+from skyfield import api
+from skyfield.framelib import itrs
+
+from tle_data import DATA_DIR, SATELLITES, parse_tles, tle_epoch
+
 
 class satellite_coordinates:
     ##
 
     def __init__(self, name):
         """
-        :param name: satellite name, must be 'ISS' or 'Fermi'
+        :param name: satellite name, must be 'ISS', 'Fermi', or 'AGILE'
         """
         self.name = name
 
-        self.ISS_data_file = Path("./dataFiles/ISS_orbital_info.txt")
-        self.Fermi_data_file = Path("./dataFiles/Fermi_GLAST_orbital_info.txt")
-        self.AGILE_data_file = Path("./dataFiles/AGILE_orbital_info.txt")
-
-        if self.name == "ISS":
-            self.data_file_path = self.ISS_data_file
-        elif self.name == "Fermi":
-            self.data_file_path = self.Fermi_data_file
-        elif self.name == "AGILE":
-            self.data_file_path = self.AGILE_data_file
-        else:
-            raise Exception("name input argument should be 'Fermi' or 'ISS' or 'AGILE' ")
-
+        if name not in SATELLITES:
+            raise ValueError("name must be 'ISS', 'Fermi', or 'AGILE'")
+        self.data_file_path = DATA_DIR / SATELLITES[name][1]
         self.datetimes, self.TLE_line_1, self.TLE_line_2 = self.read_satellite_TLE_data(self.data_file_path)
-
-        self.time_value = np.array([calendar.timegm(dt.utctimetuple()) for dt in self.datetimes])
-
+        self.time_value = np.array([dt.timestamp() for dt in self.datetimes])
         self.ts = api.load.timescale()
-
-        self.ecef = pyproj.Proj(proj='geocent', ellps='WGS84')
-        self.lla = pyproj.Proj(proj='latlong', ellps='WGS84')
-
-        self.au_to_Km = 149597870.700
-        self.day_to_seconds = 86400.0
+        self.to_ecef = pyproj.Transformer.from_crs("EPSG:4979", "EPSG:4978", always_xy=True)
+        self.to_lla = pyproj.Transformer.from_crs("EPSG:4978", "EPSG:4979", always_xy=True)
 
     ##
     def gps_to_ecef(self, lat, lon, alt):
@@ -60,7 +37,7 @@ class satellite_coordinates:
         Outputs:
           - x,y,z in meters
         """
-        x, y, z = pyproj.transform(self.lla, self.ecef, lon, lat, alt, radians=False)
+        x, y, z = self.to_ecef.transform(lon, lat, alt)
         return x, y, z
     
     def ecef_to_gps(self, x, y, z):
@@ -71,15 +48,14 @@ class satellite_coordinates:
           - lon, lat in degrees
           - alt in meters
         """
-        lon, lat, alt = pyproj.transform(self.ecef, self.lla, x, y, z, radians=False)
+        lon, lat, alt = self.to_lla.transform(x, y, z)
         return lon, lat, alt 
 
     ##
 
     def nearestDate(self, base):
-        base_timestamp = calendar.timegm(base.utctimetuple())
+        base_timestamp = self.as_utc(base).timestamp()
         differences = np.abs(base_timestamp - self.time_value)
-        # print(differences)
         arggmin = np.argmin(differences)
         delta_t = differences[arggmin]
         return arggmin, delta_t
@@ -93,34 +69,18 @@ class satellite_coordinates:
                 TLE_line_1: first line of TLE at given 'datetimes' date
                 TLE_line_2: second line of TLE at given 'datetimes' date
         """
-        TLE_line_1 = []
-        TLE_line_2 = []
-        datetimes = []
+        pairs = parse_tles(Path(data_file_path).read_text(), SATELLITES[self.name][0])
+        if not pairs:
+            raise ValueError("TLE archive is empty; run update_TLE_data.py")
+        return ([tle_epoch(first) for first, _ in pairs],
+                [first for first, _ in pairs], [second for _, second in pairs])
 
-        with open(data_file_path, "r") as f:
-            while True:
-                line1 = f.readline().strip()
-                if not line1:
-                    break
-                line2 = f.readline().strip()
-                if not line2:
-                    break
-
-                TLE_line_1.append(line1)
-                TLE_line_2.append(line2)
-
-                epoch_str = line1[18:32]
-                year_tle = int(epoch_str[:2]) + (1900 if int(epoch_str[:2]) > 70 else 2000)
-                DOY = int(epoch_str[2:5])
-
-                day_fraction = float(epoch_str[5:]) / (10**len(epoch_str[5:]))  # Normalize the fractional day
-                date = datetime.datetime(year=year_tle, month=1, day=1) + datetime.timedelta(days=DOY-1 + day_fraction)
-
-                datetimes.append(date)
-
-        return datetimes, TLE_line_1, TLE_line_2
-
-    ##
+    @staticmethod
+    def as_utc(value):
+        """For backward compatibility naive datetimes mean UTC."""
+        if value.tzinfo is None:
+            return value.replace(tzinfo=datetime.timezone.utc)
+        return value.astimezone(datetime.timezone.utc)
 
     def get_satellite_coordinates(self, input_datetime):
         """
@@ -129,34 +89,49 @@ class satellite_coordinates:
         :return: longitude (deg), latitude (deg), altitude (km), velocity vector (normalized), magnitude of the velocity vector (in km/s)
         """
         
-        ## finding which TLE is the closest to the time we want
+        state = self._propagate(input_datetime)
+        position, velocity = state.frame_xyz_and_velocity(itrs)
+        position = position.m
+        velocity = velocity.km_per_s
+        speed = np.linalg.norm(velocity)
+        if not np.all(np.isfinite(position)) or not np.isfinite(speed) or speed == 0:
+            raise ValueError("SGP4 produced an invalid state")
+        lon, lat, alt = self.ecef_to_gps(*position)
+        if alt < 0:
+            raise ValueError("Propagated satellite is below the WGS84 ellipsoid")
+        return lon, lat, alt / 1000, velocity / speed, speed
 
+    def get_lvlh_frame(self, input_datetime):
+        """Return X,Y,Z unit rows in ECEF: along-track, -orbit-normal, nadir.
+
+        Orbital angular momentum uses inertial velocity, rotated into ECEF
+        axes. Earth-relative velocity would instead define a ground-track frame.
+        """
+        state = self._propagate(input_datetime)
+        rotation = itrs.rotation_at(state.t)
+        position = rotation @ state.xyz.km
+        velocity = rotation @ state.velocity.km_per_s
+        z = -position / np.linalg.norm(position)
+        y = np.cross(z, velocity)
+        y /= np.linalg.norm(y)
+        frame = np.array([np.cross(y, z), y, z])
+        if not np.all(np.isfinite(frame)):
+            raise ValueError("Cannot construct LVLH from this state")
+        return frame
+
+    def _propagate(self, input_datetime):
+        input_datetime = self.as_utc(input_datetime)
         closest_idx, delta_t = self.nearestDate(input_datetime)
-
-        print(f"Closest TLE has a delta time of: {delta_t} seconds")
-
-        line1 = self.TLE_line_1[closest_idx]
-        line2 = self.TLE_line_2[closest_idx]
-
-        satellite = sgp4lib.EarthSatellite(line1, line2)
-
-        tttt = self.ts.utc(input_datetime.year, input_datetime.month, input_datetime.day, input_datetime.hour,
-                      input_datetime.minute, input_datetime.second + input_datetime.microsecond/1.0e6)
-
-        # tttt = ts.utc(input_datetime.year, input_datetime.month, input_datetime.day, input_datetime.hour,
-                      # input_datetime.minute, input_datetime.second)
-
-        position, velocity, error = satellite.ITRF_position_velocity_error(tttt)
-
-        norm_velocity = math.sqrt(velocity[0]**2 + velocity[1]**2 + velocity[2]**2)
-
-        norm_velocity_km_s = norm_velocity*self.au_to_Km/self.day_to_seconds
-
-        v_vec_itrf = velocity / norm_velocity # unit vector
-
-        position = np.asarray(position) * self.au_to_Km * 1000.0    # to meters
-
-        lon, lat, alt = self.ecef_to_gps(position[0], position[1], position[2])
-        alt = alt / 1000.0 # to kilometers
-
-        return lon, lat, alt, v_vec_itrf, norm_velocity_km_s
+        # TLEs are local orbit fits, not an ephemeris valid for arbitrary dates.
+        if delta_t > 14 * 86400:
+            raise ValueError("Nearest TLE is more than 14 days away; update the archive or request historical data")
+        if delta_t > 3 * 86400:
+            warnings.warn("Nearest TLE is over 3 days away; positional accuracy is uncertain", RuntimeWarning)
+        print(f"Closest TLE has a delta time of: {delta_t:.3f} seconds")
+        satellite = api.EarthSatellite(self.TLE_line_1[closest_idx], self.TLE_line_2[closest_idx], ts=self.ts)
+        state = satellite.at(self.ts.from_datetime(input_datetime))
+        if state.message:
+            raise ValueError(f"SGP4 propagation failed: {state.message}")
+        if api.wgs84.height_of(state).m < 0:
+            raise ValueError("Propagated satellite is below the WGS84 ellipsoid")
+        return state
